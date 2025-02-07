@@ -5,8 +5,7 @@
  * @copyright  2022 beikeshop.com - All Rights Reserved
  * @link       https://beikeshop.com
  * @author     TL <mengwb@guangda.work>
- * @created    2022-06-22 20:22:54
- * @modified   2022-06-22 20:22:54
+ * @modified   2024-02-02
  */
 
 namespace Beike\Shop\Http\Controllers\Account;
@@ -21,58 +20,79 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class LoginController extends Controller
 {
+    /**
+     * 显示登录页面
+     */
     public function index()
     {
         if (current_customer()) {
-            return redirect(shop_route('account.index'));
+            return redirect()->route('shop.account.index');
         }
+
         $loginData = [
             'social_buttons' => hook_filter('login.social.buttons', []),
         ];
 
-        return view('account/login', $loginData);
+       return view('account.login', $loginData);
     }
 
-    public function store(LoginRequest $request)
+    /**
+     * 处理用户登录
+     */
+    public function login(LoginRequest $request)
     {
-        $data = [
-            'request_data' => $request->all(),
-        ];
-
         try {
-            hook_action('shop.account.login.before', $data);
+            hook_action('shop.account.login.before', ['request_data' => $request->all()]);
 
-            $guestCartProduct       = CartRepo::allCartProducts(0);
-            if (! auth(Customer::AUTH_GUARD)->attempt($request->only('email', 'password'))) {
+            $guestCartProduct = CartRepo::allCartProducts(0);
+
+            // **验证用户账号 & 密码**
+            if (!Auth::guard(Customer::AUTH_GUARD)->attempt($request->only('email', 'password'))) {
                 throw new NotAcceptableHttpException(trans('shop/login.email_or_password_error'));
             }
 
+            // **获取当前登录用户**
             $customer = current_customer();
-            if (empty($customer)) {
+            if (!$customer) {
                 throw new NotFoundHttpException(trans('shop/login.empty_customer'));
-            } elseif ($customer->active != 1) {
-                Auth::guard(Customer::AUTH_GUARD)->logout();
+            }
 
+            // **检查用户状态**
+            if ($customer->active != 1) {
+                Auth::guard(Customer::AUTH_GUARD)->logout();
                 throw new NotFoundHttpException(trans('shop/login.customer_inactive'));
-            } elseif ($customer->status == 'pending') {
-                Auth::guard(Customer::AUTH_GUARD)->logout();
+            }
 
+            if ($customer->status == 'pending') {
+                Auth::guard(Customer::AUTH_GUARD)->logout();
                 throw new NotFoundHttpException(trans('shop/login.customer_not_approved'));
-            } elseif ($customer->status == 'rejected') {
-                Auth::guard(Customer::AUTH_GUARD)->logout();
+            }
 
+            if ($customer->status == 'rejected') {
+                Auth::guard(Customer::AUTH_GUARD)->logout();
                 throw new NotFoundHttpException(trans('shop/login.customer_rejected'));
             }
 
+            // **合并购物车**
             CartRepo::mergeGuestCart($customer, $guestCartProduct);
 
-            hook_action('shop.account.login.after', $data);
+            hook_action('shop.account.login.after', ['customer' => $customer]);
 
-            return json_success(trans('shop/login.login_successfully'));
+            return response()->json(['message' => trans('shop/login.login_successfully')], 200);
+
         } catch (NotAcceptableHttpException $e) {
-            return json_fail($e->getMessage(), ['error' => 'password']);
+            return response()->json(['message' => $e->getMessage(), 'error' => 'password'], 422);
         } catch (\Exception $e) {
-            return json_fail($e->getMessage(), ['error' => 'status']);
+            return response()->json(['message' => $e->getMessage(), 'error' => 'status'], 400);
         }
+    }
+
+    /**
+     * 处理用户登出
+     */
+    public function logout()
+    {
+        Auth::guard(Customer::AUTH_GUARD)->logout();
+        return redirect()->route('shop.login.index');
     }
 }
