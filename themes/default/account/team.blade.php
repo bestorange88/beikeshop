@@ -1,64 +1,78 @@
-@extends('layouts.master')
+@extends('layout.master')
 
-@section('title', '我的团队')
+@section('body-class', 'page-account')
 
 @section('content')
-<div class="container my-5">
+<x-shop-breadcrumb type="static" value="account.team" />
+
+<div class="container">
     <div class="row">
-        {{-- 侧边栏 --}}
-        <div class="col-md-3">
-            @include('account.sidebar')
-        </div>
-
-        {{-- 主体内容 --}}
-        <div class="col-md-9">
-            <div class="card shadow-sm rounded-3">
-                <div class="card-header d-flex justify-content-between align-items-center bg-light">
-                    <h4 class="mb-0">我的团队</h4>
-                    <a href="{{ shop_route('account.invite') }}" class="btn btn-sm btn-primary">
-                        <i class="bi bi-person-plus"></i> 邀请好友
-                    </a>
+        <x-shop-sidebar />
+        <div class="col-12 col-md-9">
+            {{-- 团队概况 --}}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title">我的团队</h5>
                 </div>
-
                 <div class="card-body">
-                    @if ($teamMembers instanceof \Illuminate\Support\Collection && $teamMembers->isEmpty())
-                        <div class="text-center p-4">
-                            <i class="bi bi-people text-muted" style="font-size: 3rem;"></i>
-                            <p class="text-muted mt-2">您还没有邀请任何用户</p>
-                            <a href="{{ shop_route('account.invite') }}" class="btn btn-outline-primary">
-                                立即邀请
-                            </a>
+                    <div class="row text-center">
+                        <div class="col-6 col-md-4">
+                            <h4 class="fw-bold text-primary">{{ $totalMembers }}</h4>
+                            <p class="text-muted">团队总人数</p>
                         </div>
-                    @else
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
+                        <div class="col-6 col-md-4">
+                            <h4 class="fw-bold text-warning">{{ $goldMembers }}</h4>
+                            <p class="text-muted">黄金会员人数</p>
+                        </div>
+                        <div class="col-6 col-md-4">
+                            <h4 class="fw-bold text-danger">{{ $diamondMembers }}</h4>
+                            <p class="text-muted">钻石会员人数</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 团队成员列表 --}}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">团队成员</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>姓名</th>
+                                    <th>会员等级</th>
+                                    <th>邀请时间</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($directMembers as $member)
                                     <tr>
-                                        <th>姓名</th>
-                                        <th>邮箱</th>
-                                        <th>会员等级</th>
-                                        <th>加入时间</th>
+                                        <td>{{ $member->name }}</td>
+                                        <td>
+                                            @if ($member->customer_group_id == 1)
+                                                普通会员
+                                            @elseif ($member->customer_group_id == 2)
+                                                黄金会员
+                                            @elseif ($member->customer_group_id == 3)
+                                                钻石会员
+                                            @else
+                                                未知等级
+                                            @endif
+                                        </td>
+                                        <td>{{ $member->created_at->format('Y-m-d H:i') }}</td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($teamMembers as $member)
-                                        <tr>
-                                            <td>{{ $member->name }}</td>
-                                            <td>{{ $member->email }}</td>
-                                            <td>
-                                                <span class="badge bg-info">
-                                                    {{ \DB::table('customer_group_descriptions')
-                                                        ->where('customer_group_id', $member->customer_group_id)
-                                                        ->value('name') ?? '未知等级' }}
-                                                </span>
-                                            </td>
-                                            <td>{{ $member->created_at->format('Y-m-d') }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- 分页导航 --}}
+                    <div class="mt-3">
+                        {{ $directMembers->links() }}
+                    </div>
                 </div>
             </div>
         </div>

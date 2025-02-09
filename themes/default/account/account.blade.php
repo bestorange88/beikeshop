@@ -68,64 +68,101 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
-                        {{-- 原有功能 --}}
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.team') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-people fs-2 text-primary"></i></div>
-                                <div class="text">我的团队</div>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.cashback') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-cash fs-2 text-success"></i></div>
-                                <div class="text">我的账单</div>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.invite') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-person-plus fs-2 text-warning"></i></div>
-                                <div class="text">邀请好友</div>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.levels') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-star fs-2 text-danger"></i></div>
-                                <div class="text">帮助中心</div>
-                            </a>
-                        </div>
+    {{-- ✅ 确保所有 shop_route 存在 --}}
+    <div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title">会员功能</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap text-center">
 
-                        {{-- 新增功能 --}}
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.recharge') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-wallet2 fs-2"></i></div>
-                                <div class="text">充值</div>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.withdraw') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-bank fs-2"></i></div>
-                                <div class="text">提现</div>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.points') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-coin fs-2"></i></div>
-                                <div class="text">我的积分</div>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="{{ shop_route('account.rma.index') }}" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-tools fs-2"></i></div>
-                                <div class="text">实名认证</div>
-                            </a>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <a href="javascript:void(0);" onclick="openChat()" class="d-block text-center text-decoration-none">
-                                <div class="icon mb-2"><i class="bi bi-chat-left-dots fs-2"></i></div>
-                                <div class="text">在线客服</div>
-                            </a>
-                        </div>
-                    </div>
+            {{-- 🔹 我的团队 --}}
+            <div class="col-6 col-md-3 mb-3">
+                <a href="{{ route('shop.account.team') }}" class="d-block p-3 text-dark">
+                    <div class="icon mb-2"><i class="bi bi-people fs-2"></i></div>
+                    <div class="text">我的团队</div>
+                </a>
+            </div>
+
+            {{-- 🔹 我的购物车（新增加） --}}
+            <a href="{{ route('shop.account.shop.cart.view') }}" class="d-block p-3 text-dark">
+                <div class="icon mb-2"><i class="bi bi-cart fs-2"></i></div>
+                <div class="text">我的购物车</div>
+            </a>
+
+
+            {{-- 🔹 会员升级（新增加） --}}
+            <div class="col-6 col-md-3 mb-3">
+                <a href="{{ route('shop.account.upgrade') }}" class="d-block p-3 text-dark">
+                    <div class="icon mb-2"><i class="bi bi-award fs-2"></i></div>
+                    <div class="text">会员升级</div>
+                </a>
+            </div>
+
+            {{-- 🔹 邀请好友 --}}
+            <div class="col-6 col-md-3 mb-3">
+                <a href="{{ route('shop.account.invite') }}" class="d-block p-3 text-dark">
+                    <div class="icon mb-2"><i class="bi bi-person-plus fs-2"></i></div>
+                    <div class="text">邀请好友</div>
+                </a>
+            </div>
+
+    <div class="col-6 col-md-3">
+        <a href="{{ route('shop.account.cashback') }}" class="d-block text-center text-decoration-none">
+            <div class="icon mb-2"><i class="bi bi-cash fs-2 text-success"></i></div>
+            <div class="text">我的账单</div>
+        </a>
+    </div>
+
+    {{-- ✅ 移除错误路由 'account.levels' --}}
+    <div class="col-6 col-md-3">
+        <a href="{{ route('shop.account.help') }}" class="d-block text-center text-decoration-none">
+            <div class="icon mb-2"><i class="bi bi-question-circle fs-2 text-danger"></i></div>
+            <div class="text">帮助中心</div>
+        </a>
+    </div>
+
+    {{-- ✅ 充值 --}}
+    <div class="col-6 col-md-3">
+        <a href="{{ route('shop.account.recharge') }}" class="d-block text-center text-decoration-none">
+            <div class="icon mb-2"><i class="bi bi-wallet2 fs-2"></i></div>
+            <div class="text">充值</div>
+        </a>
+    </div>
+
+    {{-- ✅ 提现 --}}
+    <div class="col-6 col-md-3">
+        <a href="{{ route('shop.account.withdraw') }}" class="d-block text-center text-decoration-none">
+            <div class="icon mb-2"><i class="bi bi-bank fs-2"></i></div>
+            <div class="text">提现</div>
+        </a>
+    </div>
+
+    {{-- ✅ 会员积分 --}}
+    <div class="col-6 col-md-3">
+        <a href="{{ route('shop.account.points') }}" class="d-block text-center text-decoration-none">
+            <div class="icon mb-2"><i class="bi bi-coin fs-2"></i></div>
+            <div class="text">我的积分</div>
+        </a>
+    </div>
+
+    {{-- ✅ 实名认证 --}}
+    <div class="col-6 col-md-3">
+        <a href="{{ route('shop.account.rma.index') }}" class="d-block text-center text-decoration-none">
+            <div class="icon mb-2"><i class="bi bi-tools fs-2"></i></div>
+            <div class="text">实名认证</div>
+        </a>
+    </div>
+
+    {{-- ✅ 在线客服 --}}
+    <div class="col-6 col-md-3">
+        <a href="javascript:void(0);" onclick="openChat()" class="d-block text-center text-decoration-none">
+            <div class="icon mb-2"><i class="bi bi-chat-left-dots fs-2"></i></div>
+            <div class="text">在线客服</div>
+        </a>
+    </div>
+</div>
+
                 </div>
             </div>
 

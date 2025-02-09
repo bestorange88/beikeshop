@@ -23,20 +23,17 @@
           <h6 class="text-uppercase mb-0">{{ __('shop/login.login') }}</h6>
         </div>
         <div class="card-body px-md-2">
+          {{-- CSRF 令牌 (Vue 绑定) --}}
+          <input type="hidden" v-model="loginForm._token" value="{{ csrf_token() }}">
+
           {{-- 登录表单 --}}
-          @hookwrapper('account.login.email')
           <el-form-item label="{{ __('shop/login.email') }}" prop="email">
             <el-input @keyup.enter.native="checkedBtnLogin('loginForm')" v-model="loginForm.email" placeholder="{{ __('shop/login.email_address') }}"></el-input>
           </el-form-item>
-          @endhookwrapper
 
-          @hookwrapper('account.login.password')
           <el-form-item label="{{ __('shop/login.password') }}" prop="password">
             <el-input @keyup.enter.native="checkedBtnLogin('loginForm')" type="password" v-model="loginForm.password" placeholder="{{ __('shop/login.password') }}"></el-input>
           </el-form-item>
-          @endhookwrapper
-
-          @hook('account.login.password.after')
 
           {{-- 忘记密码 --}}
           <a class="text-muted forgotten-link" href="{{ shop_route('forgotten.index') }}">
@@ -69,14 +66,15 @@ let app = new Vue({
     loginForm: {
       email: '',
       password: '',
+      _token: '{{ csrf_token() }}' // 确保 CSRF 令牌
     },
     loginRules: {
       email: [
-        { required: true, message: '{{ __('shop/login.enter_email') }}', trigger: 'change' },
-        { type: 'email', message: '{{ __('shop/login.email_err') }}', trigger: 'change' },
+        { required: true, message: '{{ __('shop/login.enter_email') }}', trigger: 'blur' },
+        { type: 'email', message: '{{ __('shop/login.email_err') }}', trigger: 'blur' },
       ],
       password: [
-        { required: true, message: '{{ __('shop/login.enter_password')}}', trigger: 'change' }
+        { required: true, message: '{{ __('shop/login.enter_password') }}', trigger: 'blur' }
       ],
     },
   },
@@ -85,10 +83,16 @@ let app = new Vue({
       this.$refs[form].validate((valid) => {
         if (!valid) return;
 
-        $http.post('/login', this.loginForm).then((res) => {
+        axios.post('{{ route('shop.login.store') }}', this.loginForm, {
+          headers: { 'X-CSRF-TOKEN': this.loginForm._token }
+        }).then((res) => {
           location.href = "{{ shop_route('account.index') }}";
         }).catch((err) => {
-          this.$message.error(err.response.data.message || '{{ __('shop/login.error') }}');
+          console.error('Login Error:', err.response);
+          let message = err.response && err.response.data && err.response.data.message
+            ? err.response.data.message
+            : '{{ __('shop/login.error') }}';
+          this.$message.error(message);
         });
       });
     },
