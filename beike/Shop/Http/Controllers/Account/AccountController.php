@@ -163,7 +163,80 @@ class AccountController extends Controller
             'type' => 'cashback'
         ]);
     }
+    
+    /**
+     * 更换头像
+     */
+    public function updateAvatar(Request $request)
+{
+    // ✅ 获取当前登录用户
+    $customer = Auth::guard('customers')->user();
 
+    // ✅ 确保用户已登录
+    if (!$customer) {
+        return response()->json(['message' => '未登录用户，无法上传头像！'], 401);
+    }
+
+    // ✅ 检查文件上传
+    if ($request->hasFile('avatar')) {
+        $file = $request->file('avatar');
+
+        // ✅ 允许的文件类型
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        if (!in_array($file->getClientOriginalExtension(), $allowedExtensions)) {
+            return response()->json(['message' => '只允许上传 JPG、PNG、GIF、WEBP 格式的图片！'], 422);
+        }
+
+        // ✅ 头像存储路径（storage/app/public/avatars）
+        $path = $file->store('avatars', 'public');
+
+        // ✅ 生成访问 URL
+        $avatarUrl = asset('storage/' . $path);  // 访问 URL
+
+        // ✅ 存入数据库
+        $customer->avatar = $avatarUrl;
+        $customer->save();
+
+        return response()->json([
+            'avatar_url' => $avatarUrl,
+            'message' => '头像更新成功！'
+        ], 200);
+    }
+
+    return response()->json(['message' => '未选择文件，请重试！'], 400);
+}
+    
+     /**
+     * 会员升级（缴费或邀请好友）
+     */
+    public function upgradeMembership(Request $request)
+    {
+        $customer = Auth::guard('customers')->user();
+
+        if ($customer->customer_group_id != CustomerGroup::NORMAL) {
+            return response()->json(['message' => '您已是高级会员，无需升级！'], 400);
+        }
+
+        if ($request->input('method') === 'payment') {
+            // 处理支付逻辑
+            DB::table('customer_transactions')->insert([
+                'customer_id' => $customer->id,
+                'amount' => 1000,
+                'reason' => 'membership_fee',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $customer->customer_group_id = CustomerGroup::GOLD;
+            $customer->invite_code = $this->generateInviteCode();
+            $customer->save();
+
+            return response()->json(['message' => '支付成功，已升级为黄金会员！'], 200);
+        } 
+        
+        return response()->json(['message' => '请选择升级方式！'], 400);
+    }
+    
     /**
      * 获取用户团队成员
      */
@@ -191,12 +264,51 @@ class AccountController extends Controller
      * 获取邀请码
      */
     public function getInviteCode()
-    {
-        $customer = Auth::guard('customers')->user();
-        if (!$customer) {
-            abort(403, '未登录');
-        }
-
-        return response()->json(['invite_code' => $customer->invite_code]);
+{
+    $customer = Auth::guard('customers')->user();
+    
+    if (!$customer) {
+        return response()->json(['message' => '未登录'], 403);
     }
+
+    // 🔹 如果邀请码为空，则生成并存入数据库
+    if (empty($customer->invite_code)) {
+        $customer->invite_code = $this->generateInviteCode();
+        $customer->save();
+    }
+
+    // 🔹 生成完整的邀请链接
+    $inviteLink = url('/register?invite_code=' . $customer->invite_code);
+
+    return response()->json([
+        'invite_code' => $customer->invite_code,
+        'invite_link' => $inviteLink,
+        'message' => '邀请码获取成功！'
+    ], 200);
+}
+
+    
+   public function invite()
+{
+    // ✅ 确保用户已登录
+    $customer = Auth::guard('customers')->user();
+    if (!$customer) {
+        return redirect()->route('shop.login.index')->withErrors('请先登录');
+    }
+
+    // ✅ 确保用户有邀请码
+    if (empty($customer->invite_code)) {
+        $customer->invite_code = $this->generateInviteCode();
+        $customer->save();
+    }
+
+    // ✅ 生成邀请链接
+    $inviteLink = url('/register?invite_code=' . $customer->invite_code);
+
+    // ✅ 传递数据到视图
+    return view('themes.default.account.invite', compact('customer', 'inviteLink'));
+}
+
+
+
 }
